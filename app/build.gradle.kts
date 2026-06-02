@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.rmnkhr.mashapp"
+    namespace = "com.rmnkhr.meshapp"
     compileSdk = 37
 
     defaultConfig {

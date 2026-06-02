@@ -1,4 +1,4 @@
-package com.rmnkhr.mashapp.ui.theme
+package com.rmnkhr.meshapp.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

@@ -1,4 +1,4 @@
-package com.rmnkhr.mashapp
+package com.rmnkhr.meshapp
 
 import org.junit.Test
 

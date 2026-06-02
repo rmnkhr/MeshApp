@@ -1,4 +1,4 @@
-package com.rmnkhr.mashapp
+package com.rmnkhr.meshapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.rmnkhr.mashapp.ui.theme.MashAppTheme
+import com.rmnkhr.meshapp.ui.theme.MashAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

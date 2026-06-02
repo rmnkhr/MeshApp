@@ -1,4 +1,4 @@
-package com.rmnkhr.mashapp
+package com.rmnkhr.meshapp
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -62,7 +62,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.rmnkhr.mashapp.ui.theme.MashAppTheme
+import com.rmnkhr.meshapp.ui.theme.MashAppTheme
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
