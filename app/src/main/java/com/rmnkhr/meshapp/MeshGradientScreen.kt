@@ -1,5 +1,10 @@
 package com.rmnkhr.meshapp
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -20,6 +25,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.RestartAlt
@@ -46,6 +52,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -53,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.MeshGradientPainter
 import androidx.compose.ui.graphics.toArgb
@@ -63,11 +71,18 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rmnkhr.meshapp.ui.theme.MashAppTheme
+import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sin
 import kotlin.random.Random
 
 private const val MIN_GRID = 2
 private const val MAX_GRID = 5
+
+/** Max normalized distance a point travels during the whole-mesh wobble. */
+private const val MESH_WOBBLE_DISTANCE = 0.2f
 
 /**
  * Color-harmony schemes expressed as hue offsets (in degrees) from a base hue.
@@ -168,6 +183,59 @@ fun MeshGradientScreen() {
         meshPoints.clear()
         meshPoints.addAll(EXAMPLE_POINTS)
         meshColors = EXAMPLE_COLORS
+    }
+
+    val meshAnimScope = rememberCoroutineScope()
+    var meshAnimating by remember { mutableStateOf(false) }
+
+    // Plays a one-shot "there and back" wobble across the whole mesh: every point
+    // eases out to a small random offset, then springs back to where it started.
+    // Edge points only move along their edge and corners stay pinned, so the
+    // gradient keeps filling the card while the interior ripples.
+    fun animateMesh() {
+        if (meshAnimating) return
+        meshAnimating = true
+        meshAnimScope.launch {
+            try {
+                val bases = meshPoints.toList()
+                val targets = bases.mapIndexed { index, base ->
+                    val row = index / gridSize
+                    val column = index % gridSize
+                    val canMoveX = column != 0 && column != gridSize - 1
+                    val canMoveY = row != 0 && row != gridSize - 1
+                    val angle = Random.nextFloat() * (2f * PI.toFloat())
+                    val magnitude = MESH_WOBBLE_DISTANCE * (0.6f + Random.nextFloat() * 0.4f)
+                    Offset(
+                        x = base.x + if (canMoveX) cos(angle) * magnitude else 0f,
+                        y = base.y + if (canMoveY) sin(angle) * magnitude else 0f,
+                    )
+                }
+
+                fun applyProgress(fraction: Float) {
+                    // Guard against a grid resize that happened mid-animation.
+                    if (meshPoints.size != bases.size) return
+                    for (i in bases.indices) {
+                        meshPoints[i] = lerp(bases[i], targets[i], fraction)
+                    }
+                }
+
+                val progress = Animatable(0f)
+                progress.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                ) { applyProgress(value) }
+                progress.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow,
+                    ),
+                ) { applyProgress(value) }
+                applyProgress(0f)
+            } finally {
+                meshAnimating = false
+            }
+        }
     }
 
     var showHandles by remember { mutableStateOf(true) }
@@ -306,6 +374,15 @@ fun MeshGradientScreen() {
                 Icon(
                     imageVector = Icons.Filled.Palette,
                     contentDescription = "Change colors",
+                )
+            }
+            IconButton(
+                onClick = { animateMesh() },
+                enabled = !meshAnimating,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.AutoAwesome,
+                    contentDescription = "Animate mesh",
                 )
             }
             IconButton(onClick = { loadExample() }) {
